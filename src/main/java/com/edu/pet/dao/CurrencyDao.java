@@ -7,6 +7,7 @@ import com.edu.pet.util.ConnectionPool;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class CurrencyDao {
 
@@ -15,6 +16,12 @@ public class CurrencyDao {
     private static final String FIND_ALL = """
             SELECT id, code, full_name, sign
             FROM currencies;
+            """;
+
+    private static final String FIND_BY_CODE = """
+            SELECT id, code, full_name, sign
+            FROM currencies
+            WHERE code LIKE ?;
             """;
 
     private CurrencyDao() {
@@ -36,6 +43,17 @@ public class CurrencyDao {
             return currencies;
         } catch (SQLException e) {
            throw new InternalErrorException("something went wrong...");
+        }
+    }
+
+    public Optional<Currency> findByCode(String code) throws InternalErrorException {
+        try (Connection connection = ConnectionPool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(FIND_BY_CODE)) {
+            statement.setString(1, code);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next() ? Optional.of(buildCurrency(resultSet)) : Optional.empty();
+        } catch (SQLException e) {
+            throw new InternalErrorException("something went wrong...");
         }
     }
 
