@@ -4,12 +4,10 @@ import com.edu.pet.dao.CurrencyDao;
 import com.edu.pet.dto.CurrencyDto;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CurrencyService {
@@ -31,5 +29,10 @@ public class CurrencyService {
         return currencies.stream()
                 .map(currency -> modelMapper.map(currency, CurrencyDto.class))
                 .collect(Collectors.toList());
+    }
+
+    public Optional<CurrencyDto> findByCode(String code) throws InternalErrorException {
+        Optional<Currency> maybeCurrency = currencyDao.findByCode(code);
+        return maybeCurrency.map(currency -> modelMapper.map(currency, CurrencyDto.class));
     }
 }
