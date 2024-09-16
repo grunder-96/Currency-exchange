@@ -1,9 +1,13 @@
 package com.edu.pet.service;
 
 import com.edu.pet.dao.CurrencyDao;
+import com.edu.pet.dto.CreateCurrencyDto;
 import com.edu.pet.dto.CurrencyDto;
+import com.edu.pet.exception.CurrencyCodeInvalidException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
+import com.edu.pet.util.validation.CurrencyCodeValidator;
+import com.edu.pet.util.validation.Validator;
 import org.modelmapper.ModelMapper;
 
 import java.util.List;
@@ -15,6 +19,7 @@ public class CurrencyService {
     private static final CurrencyService INSTANCE = new CurrencyService();
     private final CurrencyDao currencyDao = CurrencyDao.getInstance();
     private final ModelMapper modelMapper = new ModelMapper();
+    private final Validator<String> validator = new CurrencyCodeValidator();
 
     private CurrencyService() {
 
@@ -31,7 +36,11 @@ public class CurrencyService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<CurrencyDto> findByCode(String code) throws InternalErrorException {
+    public Optional<CurrencyDto> findByCode(String code) throws CurrencyCodeInvalidException, InternalErrorException {
+        code = code.replace("/", "");
+        if (!validator.isValid(code)) {
+            throw new CurrencyCodeInvalidException("currency code is invalid");
+        }
         Optional<Currency> maybeCurrency = currencyDao.findByCode(code);
         return maybeCurrency.map(currency -> modelMapper.map(currency, CurrencyDto.class));
     }
