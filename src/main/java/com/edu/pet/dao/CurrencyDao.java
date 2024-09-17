@@ -1,8 +1,10 @@
 package com.edu.pet.dao;
 
+import com.edu.pet.exception.CurrencyCodeUniqueException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
 import com.edu.pet.util.ConnectionPool;
+import org.sqlite.SQLiteException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,6 +24,11 @@ public class CurrencyDao {
             SELECT id, code, full_name, sign
             FROM currencies
             WHERE code LIKE ?;
+            """;
+
+    private static final String SAVE_SQL = """
+            INSERT INTO currencies (code, full_name, sign)
+            VALUES (upper(?), ?, ?);
             """;
 
     private CurrencyDao() {
@@ -53,6 +60,24 @@ public class CurrencyDao {
             ResultSet resultSet = statement.executeQuery();
             return resultSet.next() ? Optional.of(buildCurrency(resultSet)) : Optional.empty();
         } catch (SQLException e) {
+            throw new InternalErrorException("something went wrong...");
+        }
+    }
+
+    public Currency save(Currency currency) throws CurrencyCodeUniqueException, InternalErrorException {
+        try (Connection connection = ConnectionPool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, currency.getCode());
+            statement.setString(2, currency.getFullName());
+            statement.setString(3, currency.getSign());
+            statement.executeUpdate();
+            ResultSet resultSet = statement.getGeneratedKeys();
+            currency.setId(resultSet.getInt(1));
+            return currency;
+        } catch (SQLException e) {
+            if (((SQLiteException) e).getResultCode().name().equals("SQLITE_CONSTRAINT_UNIQUE")) {
+                throw new CurrencyCodeUniqueException("currency with this code already exists");
+            }
             throw new InternalErrorException("something went wrong...");
         }
     }
