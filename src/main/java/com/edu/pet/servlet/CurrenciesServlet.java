@@ -2,7 +2,7 @@ package com.edu.pet.servlet;
 
 import com.edu.pet.dto.CreateCurrencyDto;
 import com.edu.pet.dto.CurrencyDto;
-import com.edu.pet.exception.CurrencyCodeUniqueException;
+import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.CurrencyService;
@@ -65,7 +65,7 @@ public class CurrenciesServlet extends HttpServlet {
             ));
             resp.setStatus(SC_CREATED);
             objectMapper.writeValue(writer, currencvDto);
-        } catch (CurrencyCodeUniqueException e) {
+        } catch (AlreadyExistsException e) {
             resp.setStatus(SC_CONFLICT);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } catch (InternalErrorException e) {

@@ -1,7 +1,7 @@
 package com.edu.pet.servlet;
 
 import com.edu.pet.dto.CurrencyDto;
-import com.edu.pet.exception.CurrencyCodeInvalidException;
+import com.edu.pet.exception.ValidationException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.CurrencyService;
@@ -45,7 +45,7 @@ public class CurrencyServlet extends HttpServlet {
 
             resp.setStatus(SC_OK);
             objectMapper.writeValue(writer, maybeCurrencyDto.get());
-        } catch (CurrencyCodeInvalidException e) {
+        } catch (ValidationException e) {
             resp.setStatus(SC_BAD_REQUEST);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } catch (InternalErrorException e) {

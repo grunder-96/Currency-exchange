@@ -1,6 +1,6 @@
 package com.edu.pet.dao;
 
-import com.edu.pet.exception.CurrencyCodeUniqueException;
+import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
 import com.edu.pet.util.ConnectionPool;
@@ -64,7 +64,7 @@ public class CurrencyDao {
         }
     }
 
-    public Currency save(Currency currency) throws CurrencyCodeUniqueException, InternalErrorException {
+    public Currency save(Currency currency) throws AlreadyExistsException, InternalErrorException {
         try (Connection connection = ConnectionPool.getConnection();
              PreparedStatement statement = connection.prepareStatement(SAVE_SQL, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, currency.getCode());
@@ -76,7 +76,7 @@ public class CurrencyDao {
             return currency;
         } catch (SQLException e) {
             if (((SQLiteException) e).getResultCode().name().equals("SQLITE_CONSTRAINT_UNIQUE")) {
-                throw new CurrencyCodeUniqueException("currency with this code already exists");
+                throw new AlreadyExistsException("currency with this code already exists");
             }
             throw new InternalErrorException("something went wrong...");
         }
