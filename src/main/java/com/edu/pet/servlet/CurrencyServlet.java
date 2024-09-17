@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Optional;
 
+import static jakarta.servlet.http.HttpServletResponse.*;
+
 @WebServlet("/currency/*")
 public class CurrencyServlet extends HttpServlet {
 
@@ -28,7 +30,7 @@ public class CurrencyServlet extends HttpServlet {
         Optional<String> maybeCode = Optional.ofNullable(req.getPathInfo());
         try {
             if (maybeCode.isEmpty()) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("currency code missing in url"));
                 return;
             }
@@ -36,18 +38,18 @@ public class CurrencyServlet extends HttpServlet {
             Optional<CurrencyDto> maybeCurrencyDto = currencyService.findByCode(maybeCode.get());
 
             if (maybeCurrencyDto.isEmpty()) {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.setStatus(SC_NOT_FOUND);
                 objectMapper.writeValue(writer, new ErrorBody("such currency is not in the database"));
                 return;
             }
 
-            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setStatus(SC_OK);
             objectMapper.writeValue(writer, maybeCurrencyDto.get());
         } catch (CurrencyCodeInvalidException e) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.setStatus(SC_BAD_REQUEST);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } catch (InternalErrorException e) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
