@@ -4,6 +4,7 @@ import com.edu.pet.dao.CurrencyDao;
 import com.edu.pet.dto.CreateCurrencyDto;
 import com.edu.pet.dto.CurrencyDto;
 import com.edu.pet.exception.CurrencyCodeInvalidException;
+import com.edu.pet.exception.CurrencyCodeUniqueException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
@@ -43,5 +44,11 @@ public class CurrencyService {
         }
         Optional<Currency> maybeCurrency = currencyDao.findByCode(code);
         return maybeCurrency.map(currency -> modelMapper.map(currency, CurrencyDto.class));
+    }
+
+    public CurrencyDto save(CreateCurrencyDto createCurrencyDto) throws CurrencyCodeUniqueException, InternalErrorException {
+        modelMapper.typeMap(CreateCurrencyDto.class, Currency.class).addMapping(CreateCurrencyDto::getName, Currency::setFullName);
+        Currency createCurrency = modelMapper.map(createCurrencyDto, Currency.class);
+        return modelMapper.map(currencyDao.save(createCurrency), CurrencyDto.class);
     }
 }
