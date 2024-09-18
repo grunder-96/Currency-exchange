@@ -31,12 +31,11 @@ public class CurrenciesServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter writer = resp.getWriter();
         try {
+            objectMapper.writeValue(writer, currencyService.findAll());
             resp.setStatus(SC_OK);
-            List<CurrencyDto> currenciesDto = currencyService.findAll();
-            objectMapper.writeValue(writer, currenciesDto);
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
         } finally {
             writer.close();
         }
@@ -63,14 +62,14 @@ public class CurrenciesServlet extends HttpServlet {
                     parameterMap.get("name")[0],
                     parameterMap.get("sign")[0]
             ));
-            resp.setStatus(SC_CREATED);
             objectMapper.writeValue(writer, currencvDto);
+            resp.setStatus(SC_CREATED);
         } catch (AlreadyExistsException e) {
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
             resp.setStatus(SC_CONFLICT);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
         } finally {
             writer.close();
         }
