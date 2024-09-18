@@ -31,6 +31,12 @@ public class CurrencyDao {
             VALUES (upper(?), ?, ?);
             """;
 
+    private static final String FIND_BY_ID = """
+            SELECT id, code, full_name, sign
+            FROM currencies
+            WHERE id = ?;
+            """;
+
     private CurrencyDao() {
 
     }
@@ -57,6 +63,17 @@ public class CurrencyDao {
         try (Connection connection = ConnectionPool.getConnection();
              PreparedStatement statement = connection.prepareStatement(FIND_BY_CODE)) {
             statement.setString(1, code);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next() ? Optional.of(buildCurrency(resultSet)) : Optional.empty();
+        } catch (SQLException e) {
+            throw new InternalErrorException("something went wrong...");
+        }
+    }
+
+    public Optional<Currency> findById(int id) throws InternalErrorException {
+        try (Connection connection = ConnectionPool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(FIND_BY_ID)) {
+            statement.setInt(1, id);
             ResultSet resultSet = statement.executeQuery();
             return resultSet.next() ? Optional.of(buildCurrency(resultSet)) : Optional.empty();
         } catch (SQLException e) {
