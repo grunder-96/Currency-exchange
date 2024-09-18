@@ -26,8 +26,9 @@ public class CurrencyService {
 
     }
 
-    public static CurrencyService getInstance() {
-        return INSTANCE;
+    {
+        modelMapper.typeMap(CreateCurrencyDto.class, Currency.class)
+                .addMapping(CreateCurrencyDto::getName, Currency::setFullName);
     }
 
     public List<CurrencyDto> findAll() throws InternalErrorException {
@@ -47,8 +48,11 @@ public class CurrencyService {
     }
 
     public CurrencyDto save(CreateCurrencyDto createCurrencyDto) throws AlreadyExistsException, InternalErrorException {
-        modelMapper.typeMap(CreateCurrencyDto.class, Currency.class).addMapping(CreateCurrencyDto::getName, Currency::setFullName);
         Currency createCurrency = modelMapper.map(createCurrencyDto, Currency.class);
         return modelMapper.map(currencyDao.save(createCurrency), CurrencyDto.class);
+    }
+
+    public static CurrencyService getInstance() {
+        return INSTANCE;
     }
 }

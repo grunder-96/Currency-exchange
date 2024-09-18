@@ -41,10 +41,6 @@ public class CurrencyDao {
 
     }
 
-    public static CurrencyDao getInstance() {
-        return INSTANCE;
-    }
-
     public List<Currency> findAll() throws InternalErrorException {
         try (Connection connection = ConnectionPool.getConnection();
              PreparedStatement statement = connection.prepareStatement(FIND_ALL)) {
@@ -106,5 +102,9 @@ public class CurrencyDao {
                 resultSet.getObject("full_name", String.class),
                 resultSet.getObject("sign", String.class)
         );
+    }
+
+    public static CurrencyDao getInstance() {
+        return INSTANCE;
     }
 }
