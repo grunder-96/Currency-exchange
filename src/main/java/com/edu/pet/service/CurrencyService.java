@@ -7,8 +7,6 @@ import com.edu.pet.exception.ValidationException;
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
-import com.edu.pet.util.validation.CurrencyCodeValidator;
-import com.edu.pet.util.validation.Validator;
 import org.modelmapper.ModelMapper;
 
 import java.util.List;
