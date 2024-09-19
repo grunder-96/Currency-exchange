@@ -37,6 +37,8 @@ public class CurrencyDao {
             WHERE id = ?;
             """;
 
+    private static final String UNIQUE_CONSTRAINT = "SQLITE_CONSTRAINT_UNIQUE";
+
     private CurrencyDao() {
 
     }
@@ -88,7 +90,7 @@ public class CurrencyDao {
             currency.setId(resultSet.getInt(1));
             return currency;
         } catch (SQLException e) {
-            if (((SQLiteException) e).getResultCode().name().equals("SQLITE_CONSTRAINT_UNIQUE")) {
+            if (((SQLiteException) e).getResultCode().name().equals(UNIQUE_CONSTRAINT)) {
                 throw new AlreadyExistsException("currency with this code already exists");
             }
             throw new InternalErrorException("something went wrong...");
