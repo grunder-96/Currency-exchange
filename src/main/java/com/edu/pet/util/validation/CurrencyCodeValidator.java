@@ -1,9 +1,24 @@
 package com.edu.pet.util.validation;
 
-public class CurrencyCodeValidator extends Validator<String> {
+import java.util.Currency;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-    @Override
-    public boolean isValid(String s) {
-        return !s.isBlank() && s.matches("[a-zA-Z]{3}");
+public class CurrencyCodeValidator {
+
+    private static Set<String> codes;
+
+    private CurrencyCodeValidator() {
+
+    }
+
+    public static boolean isValid(String code) {
+         if (Objects.isNull(codes)) {
+             codes = Currency.getAvailableCurrencies().stream()
+                     .map(Currency::getCurrencyCode)
+                     .collect(Collectors.toSet());
+         }
+         return codes.contains(code.toUpperCase());
     }
 }
