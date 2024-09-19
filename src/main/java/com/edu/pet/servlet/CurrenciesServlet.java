@@ -6,6 +6,7 @@ import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.CurrencyService;
+import com.edu.pet.util.validation.ParamsValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,9 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static jakarta.servlet.http.HttpServletResponse.*;
 
@@ -43,25 +43,25 @@ public class CurrenciesServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Map<String, String[]> parameterMap = req.getParameterMap();
-        List<String> missingFields = Arrays.stream(CreateCurrencyDto.class.getDeclaredFields())
-                .map(Field::getName)
-                .filter(Predicate.not(parameterMap::containsKey))
-                .toList();
         PrintWriter writer = resp.getWriter();
+        ParamsValidator paramsValidator = new ParamsValidator(req, List.of("name", "code", "sign"));
+
         try {
-            if (!missingFields.isEmpty()) {
+            if (!paramsValidator.isValid()) {
+                objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty values - %s".formatted(
+                        paramsValidator.getInvalidParams().stream().collect(Collectors.joining(", "))
+                )));
                 resp.setStatus(SC_BAD_REQUEST);
-                StringJoiner joiner = new StringJoiner(", ");
-                missingFields.forEach(joiner::add);
-                objectMapper.writeValue(writer, new ErrorBody("field(-s) not found - " + joiner.toString()));
+                return;
             }
 
-            CurrencyDto currencvDto = currencyService.save(new CreateCurrencyDto(
-                    parameterMap.get("code")[0],
-                    parameterMap.get("name")[0],
-                    parameterMap.get("sign")[0]
-            ));
+            CreateCurrencyDto createCurrencyDto = new CreateCurrencyDto(
+                    req.getParameter("code"),
+                    req.getParameter("name"),
+                    req.getParameter("sign")
+            );
+
+            CurrencyDto currencvDto = currencyService.save(createCurrencyDto);
             objectMapper.writeValue(writer, currencvDto);
             resp.setStatus(SC_CREATED);
         } catch (AlreadyExistsException e) {

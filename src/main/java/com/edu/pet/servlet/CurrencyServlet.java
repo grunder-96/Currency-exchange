@@ -1,10 +1,10 @@
 package com.edu.pet.servlet;
 
 import com.edu.pet.dto.CurrencyDto;
-import com.edu.pet.exception.ValidationException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.CurrencyService;
+import com.edu.pet.util.validation.CurrencyCodeValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -35,7 +35,15 @@ public class CurrencyServlet extends HttpServlet {
                 return;
             }
 
-            Optional<CurrencyDto> maybeCurrencyDto = currencyService.findByCode(maybeCode.get());
+            String code = maybeCode.get().replace("/", "");
+
+            if (!CurrencyCodeValidator.isValid(code)) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("currency code is invalid"));
+                return;
+            }
+
+            Optional<CurrencyDto> maybeCurrencyDto = currencyService.findByCode(code);
 
             if (maybeCurrencyDto.isEmpty()) {
                 resp.setStatus(SC_NOT_FOUND);
@@ -45,9 +53,6 @@ public class CurrencyServlet extends HttpServlet {
 
             resp.setStatus(SC_OK);
             objectMapper.writeValue(writer, maybeCurrencyDto.get());
-        } catch (ValidationException e) {
-            resp.setStatus(SC_BAD_REQUEST);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } catch (InternalErrorException e) {
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));

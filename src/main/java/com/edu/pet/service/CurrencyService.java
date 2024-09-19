@@ -38,10 +38,6 @@ public class CurrencyService {
     }
 
     public Optional<CurrencyDto> findByCode(String code) throws ValidationException, InternalErrorException {
-        code = code.replace("/", "");
-        if (!CurrencyCodeValidator.isValid(code)) {
-            throw new ValidationException("currency code is invalid");
-        }
         Optional<Currency> maybeCurrency = currencyDao.findByCode(code);
         return maybeCurrency.map(currency -> modelMapper.map(currency, CurrencyDto.class));
     }
