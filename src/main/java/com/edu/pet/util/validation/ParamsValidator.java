@@ -21,7 +21,7 @@ public class ParamsValidator {
 
     public List<String> getInvalidParams() {
         return requiredParams.stream()
-                .filter(param -> req.getParameter(param).isEmpty())
+                .filter(param -> req.getParameter(param).isBlank())
                 .toList();
     }
 }
