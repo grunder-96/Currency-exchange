@@ -50,7 +50,7 @@ public class CurrenciesServlet extends HttpServlet {
         try {
             if (!paramsValidator.isValid()) {
                 objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty values - %s".formatted(
-                        paramsValidator.getInvalidParams().stream().collect(Collectors.joining(", "))
+                        String.join(", ", paramsValidator.getInvalidParams())
                 )));
                 resp.setStatus(SC_BAD_REQUEST);
                 return;
