@@ -2,6 +2,7 @@ package com.edu.pet.dao;
 
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
+import com.edu.pet.exception.ValidationException;
 import com.edu.pet.model.Currency;
 import com.edu.pet.util.ConnectionPool;
 import org.sqlite.SQLiteException;
@@ -37,7 +38,7 @@ public class CurrencyDao {
             WHERE id = ?;
             """;
 
-    private static final String UNIQUE_CONSTRAINT = "SQLITE_CONSTRAINT_UNIQUE";
+    private static final int CONSTRAINT_UNIQUE_CODE = 2067;
 
     private CurrencyDao() {
 
@@ -90,7 +91,7 @@ public class CurrencyDao {
             currency.setId(resultSet.getInt(1));
             return currency;
         } catch (SQLException e) {
-            if (((SQLiteException) e).getResultCode().name().equals(UNIQUE_CONSTRAINT)) {
+            if (((SQLiteException) e).getResultCode().code == CONSTRAINT_UNIQUE_CODE) {
                 throw new AlreadyExistsException("currency with this code already exists");
             }
             throw new InternalErrorException("something went wrong...");
