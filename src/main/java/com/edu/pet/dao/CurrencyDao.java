@@ -2,7 +2,6 @@ package com.edu.pet.dao;
 
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
-import com.edu.pet.exception.ValidationException;
 import com.edu.pet.model.Currency;
 import com.edu.pet.util.ConnectionPool;
 import org.sqlite.SQLiteException;

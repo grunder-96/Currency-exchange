@@ -3,7 +3,6 @@ package com.edu.pet.service;
 import com.edu.pet.dao.CurrencyDao;
 import com.edu.pet.dto.CreateCurrencyDto;
 import com.edu.pet.dto.CurrencyDto;
-import com.edu.pet.exception.ValidationException;
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
