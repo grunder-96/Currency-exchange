@@ -6,6 +6,7 @@ import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.CurrencyService;
+import com.edu.pet.util.validation.CurrencyCodeValidator;
 import com.edu.pet.util.validation.ParamsValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -55,10 +56,18 @@ public class CurrenciesServlet extends HttpServlet {
                 return;
             }
 
+            String code = req.getParameter("code").trim();
+
+            if (!CurrencyCodeValidator.isValid(code)) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("currency code is invalid"));
+                return;
+            }
+
             CreateCurrencyDto createCurrencyDto = new CreateCurrencyDto(
-                    req.getParameter("code"),
-                    req.getParameter("name"),
-                    req.getParameter("sign")
+                    code,
+                    req.getParameter("name").trim(),
+                    req.getParameter("sign").trim()
             );
 
             CurrencyDto currencvDto = currencyService.save(createCurrencyDto);
