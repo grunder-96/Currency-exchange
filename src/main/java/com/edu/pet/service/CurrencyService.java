@@ -35,7 +35,7 @@ public class CurrencyService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<CurrencyDto> findByCode(String code) throws ValidationException, InternalErrorException {
+    public Optional<CurrencyDto> findByCode(String code) throws InternalErrorException {
         Optional<Currency> maybeCurrency = currencyDao.findByCode(code);
         return maybeCurrency.map(currency -> modelMapper.map(currency, CurrencyDto.class));
     }
