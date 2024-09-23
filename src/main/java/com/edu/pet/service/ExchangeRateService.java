@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ExchangeRateService {
 
@@ -36,6 +37,11 @@ public class ExchangeRateService {
         return exchangeRates.stream()
                 .map(exchangeRate -> modelMapper.map(exchangeRate, ExchangeRateDto.class))
                 .toList();
+    }
+
+    public Optional<ExchangeRateDto> findByPair(String baseCurrencyCode, String targetCurrencyCode) {
+        Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(baseCurrencyCode, targetCurrencyCode);
+        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, ExchangeRateDto.class));
     }
 
     private Converter<ExchangeRate, ExchangeRateDto> toExchangeRateDto() {
