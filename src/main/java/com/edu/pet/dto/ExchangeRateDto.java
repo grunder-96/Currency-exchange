@@ -47,6 +47,6 @@ public class ExchangeRateDto {
     }
 
     public void setRate(BigDecimal rate) {
-        this.rate = rate;
+        this.rate = rate.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 }
