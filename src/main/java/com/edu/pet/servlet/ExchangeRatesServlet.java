@@ -77,14 +77,14 @@ public class ExchangeRatesServlet extends HttpServlet {
             }
 
             ExchangeRateDto exchangeRateDto = exchangeRateService.save(baseCurrencyCode, targetCurrencyCode, rate);
-            objectMapper.writeValue(writer, exchangeRateDto);
             resp.setStatus(SC_CREATED);
+            objectMapper.writeValue(writer, exchangeRateDto);
         } catch (AlreadyExistsException e) {
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
             resp.setStatus(SC_CONFLICT);
-        } catch (InternalErrorException e) {
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+        } catch (InternalErrorException e) {
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
         }

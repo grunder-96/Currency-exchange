@@ -32,11 +32,11 @@ public class CurrenciesServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter writer = resp.getWriter();
         try {
-            objectMapper.writeValue(writer, currencyService.findAll());
             resp.setStatus(SC_OK);
+            objectMapper.writeValue(writer, currencyService.findAll());
         } catch (InternalErrorException e) {
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
         }
@@ -49,10 +49,10 @@ public class CurrenciesServlet extends HttpServlet {
 
         try {
             if (!paramsValidator.isValid()) {
-                objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty values - %s".formatted(
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty - %s".formatted(
                         String.join(", ", paramsValidator.getInvalidParams())
                 )));
-                resp.setStatus(SC_BAD_REQUEST);
                 return;
             }
 
@@ -71,14 +71,14 @@ public class CurrenciesServlet extends HttpServlet {
             );
 
             CurrencyDto currencvDto = currencyService.save(createCurrencyDto);
-            objectMapper.writeValue(writer, currencvDto);
             resp.setStatus(SC_CREATED);
+            objectMapper.writeValue(writer, currencvDto);
         } catch (AlreadyExistsException e) {
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
             resp.setStatus(SC_CONFLICT);
-        } catch (InternalErrorException e) {
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+        } catch (InternalErrorException e) {
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
         }
