@@ -6,10 +6,7 @@ import com.edu.pet.model.ExchangeRate;
 import com.edu.pet.util.ConnectionPool;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +39,14 @@ public class ExchangeRateDao {
                 AND target_currency_id = (SELECT id FROM currencies WHERE code LIKE ?);
             """;
 
+    private static final String SAVE_SQL = """
+            INSERT INTO exchange_rates(base_currency_id, target_currency_id, rate) VALUES (
+                (SELECT id FROM currencies WHERE code LIKE ?),
+                (SELECT id FROM currencies WHERE code LIKE ?),
+                ?
+            );
+            """;
+
     private ExchangeRateDao() {
 
     }
@@ -67,6 +72,19 @@ public class ExchangeRateDao {
             statement.setObject(2, targetCurrencyCode);
             ResultSet resultSet = statement.executeQuery();
             return resultSet.next() ? Optional.of(buildExchangeRate(resultSet)) : Optional.empty();
+        } catch (SQLException e) {
+            throw new InternalErrorException("something went wrong...");
+        }
+    }
+
+    public ExchangeRate save(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) throws InternalErrorException {
+        try (Connection connection = ConnectionPool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SAVE_SQL)) {
+            statement.setObject(1, baseCurrencyCode);
+            statement.setObject(2, targetCurrencyCode);
+            statement.setObject(3, rate);
+            statement.executeUpdate();
+            return findByCodePair(baseCurrencyCode, targetCurrencyCode).get();
         } catch (SQLException e) {
             throw new InternalErrorException("something went wrong...");
         }
