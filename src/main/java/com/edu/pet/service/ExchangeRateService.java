@@ -2,12 +2,9 @@ package com.edu.pet.service;
 
 import com.edu.pet.dao.CurrencyDao;
 import com.edu.pet.dao.ExchangeRateDao;
-import com.edu.pet.dto.CurrencyDto;
 import com.edu.pet.dto.ExchangeRateDto;
 import com.edu.pet.model.ExchangeRate;
-import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,10 +36,10 @@ public class ExchangeRateService {
                 .toList();
     }
 
-//    public Optional<ExchangeRateDto> findByPair(String baseCurrencyCode, String targetCurrencyCode) {
-//        Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(baseCurrencyCode, targetCurrencyCode);
-//        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, ExchangeRateDto.class));
-//    }
+    public Optional<ExchangeRateDto> findByCodePair(String baseCurrencyCode, String targetCurrencyCode) {
+        Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(baseCurrencyCode, targetCurrencyCode);
+        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, ExchangeRateDto.class));
+    }
 
 //    private Converter<ExchangeRate, ExchangeRateDto> toExchangeRateDto() {
 //        return context -> {

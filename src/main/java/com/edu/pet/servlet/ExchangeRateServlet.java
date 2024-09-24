@@ -28,38 +28,38 @@ public class ExchangeRateServlet extends HttpServlet {
         PrintWriter writer = resp.getWriter();
         Optional<String> maybeCurrencyPair = Optional.ofNullable(req.getPathInfo());
 
-//        try {
-//            if (maybeCurrencyPair.isEmpty()) {
-//                resp.setStatus(SC_BAD_REQUEST);
-//                objectMapper.writeValue(writer, new ErrorBody("currency pair missing in url"));
-//                return;
-//            }
-//
-//            String currencyPair = maybeCurrencyPair.get().replace("/", "");
-//            String baseCurrencyCode;
-//            String targetCurrencycode;
-//
-//            if (!(currencyPair.matches("[a-zA-Z]{6}") &&
-//                  CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
-//                  CurrencyCodeValidator.isValid(targetCurrencycode = currencyPair.substring(3)))) {
-//                resp.setStatus(SC_BAD_REQUEST);
-//                objectMapper.writeValue(writer, new ErrorBody("entered value not currency pair"));
-//                return;
-//            }
-//
-//            Optional<ExchangeRateDto> maybeExchangeRateDto = exchangeRateService.findByPair(baseCurrencyCode, targetCurrencycode);
-//
-//            if (maybeExchangeRateDto.isEmpty()) {
-//                resp.setStatus(SC_NOT_FOUND);
-//                objectMapper.writeValue(writer, new ErrorBody("exchange rate for the pair not found"));
-//                return;
-//            }
-//
-//            resp.setStatus(SC_OK);
-//            objectMapper.writeValue(writer, maybeExchangeRateDto.get());
-//        } finally {
-//            writer.close();
-//
-//        }
+        try {
+            if (maybeCurrencyPair.isEmpty()) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("currency pair missing in url"));
+                return;
+            }
+
+            String currencyPair = maybeCurrencyPair.get().replace("/", "");
+            String baseCurrencyCode;
+            String targetCurrencycode;
+
+            if (!(currencyPair.matches("[a-zA-Z]{6}") &&
+                  CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
+                  CurrencyCodeValidator.isValid(targetCurrencycode = currencyPair.substring(3)))) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("entered value not currency pair"));
+                return;
+            }
+
+            Optional<ExchangeRateDto> maybeExchangeRateDto = exchangeRateService.findByCodePair(baseCurrencyCode, targetCurrencycode);
+
+            if (maybeExchangeRateDto.isEmpty()) {
+                resp.setStatus(SC_NOT_FOUND);
+                objectMapper.writeValue(writer, new ErrorBody("exchange rate for the pair not found"));
+                return;
+            }
+
+            resp.setStatus(SC_OK);
+            objectMapper.writeValue(writer, maybeExchangeRateDto.get());
+        } finally {
+            writer.close();
+
+        }
     }
 }
