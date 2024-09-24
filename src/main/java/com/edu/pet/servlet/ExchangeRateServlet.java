@@ -43,7 +43,7 @@ public class ExchangeRateServlet extends HttpServlet {
                   CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
                   CurrencyCodeValidator.isValid(targetCurrencycode = currencyPair.substring(3)))) {
                 resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("entered value not currency pair"));
+                objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
                 return;
             }
 
