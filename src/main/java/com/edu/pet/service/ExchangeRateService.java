@@ -23,13 +23,13 @@ public class ExchangeRateService {
 
     }
 
-    {
-        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
-        modelMapper.createTypeMap(ExchangeRate.class, ExchangeRateDto.class).addMappings(mapper -> {
-            mapper.skip(ExchangeRateDto::setBaseCurrency);
-            mapper.skip(ExchangeRateDto::setTargetCurrency);
-        }).setPostConverter(toExchangeRateDto());
-    }
+//    {
+//        modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+//        modelMapper.createTypeMap(ExchangeRate.class, ExchangeRateDto.class).addMappings(mapper -> {
+//            mapper.skip(ExchangeRateDto::setBaseCurrency);
+//            mapper.skip(ExchangeRateDto::setTargetCurrency);
+//        }).setPostConverter(toExchangeRateDto());
+//    }
 
 
     public List<ExchangeRateDto> findAll() {
@@ -39,22 +39,22 @@ public class ExchangeRateService {
                 .toList();
     }
 
-    public Optional<ExchangeRateDto> findByPair(String baseCurrencyCode, String targetCurrencyCode) {
-        Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(baseCurrencyCode, targetCurrencyCode);
-        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, ExchangeRateDto.class));
-    }
+//    public Optional<ExchangeRateDto> findByPair(String baseCurrencyCode, String targetCurrencyCode) {
+//        Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(baseCurrencyCode, targetCurrencyCode);
+//        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, ExchangeRateDto.class));
+//    }
 
-    private Converter<ExchangeRate, ExchangeRateDto> toExchangeRateDto() {
-        return context -> {
-            ExchangeRate source = context.getSource();
-            ExchangeRateDto destination = context.getDestination();
-
-            destination.setBaseCurrency(modelMapper.map(currencyDao.findById(source.getBaseCurrencyId()).get(), CurrencyDto.class));
-            destination.setTargetCurrency(modelMapper.map(currencyDao.findById(source.getTargetCurrencyId()).get(), CurrencyDto.class));
-
-            return context.getDestination();
-        };
-    }
+//    private Converter<ExchangeRate, ExchangeRateDto> toExchangeRateDto() {
+//        return context -> {
+//            ExchangeRate source = context.getSource();
+//            ExchangeRateDto destination = context.getDestination();
+//
+//            destination.setBaseCurrency(modelMapper.map(currencyDao.findById(source.getBaseCurrency()).get(), CurrencyDto.class));
+//            destination.setTargetCurrency(modelMapper.map(currencyDao.findById(source.getTargetCurrency()).get(), CurrencyDto.class));
+//
+//            return context.getDestination();
+//        };
+//    }
 
     public static ExchangeRateService getInstance() {
         return INSTANCE;

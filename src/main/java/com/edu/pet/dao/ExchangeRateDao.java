@@ -1,6 +1,7 @@
 package com.edu.pet.dao;
 
 import com.edu.pet.exception.InternalErrorException;
+import com.edu.pet.model.Currency;
 import com.edu.pet.model.ExchangeRate;
 import com.edu.pet.util.ConnectionPool;
 
@@ -18,8 +19,14 @@ public class ExchangeRateDao {
     private static final ExchangeRateDao INSTANCE = new ExchangeRateDao();
 
     private static final String FIND_ALL = """
-            SELECT id, base_currency_id, target_currency_id, rate
-            FROM exchange_rates;
+            SELECT
+               er.id er_id,
+               b.id b_id, b.code b_code, b.full_name b_full_name, b.sign b_sign,
+               t.id t_id, t.code t_code, t.full_name t_full_name, t.sign t_sign,
+               er.rate er_rate
+            FROM exchange_rates er
+            JOIN currencies b ON er.base_currency_id = b.id
+            JOIN currencies t ON er.target_currency_id = t.id;
             """;
 
     private static final String FIND_BY_CODE_PAIR = """
@@ -49,24 +56,38 @@ public class ExchangeRateDao {
         }
     }
 
-    public Optional<ExchangeRate> findByCodePair(String baseCurrencyCode, String targetCurrencyCode) throws InternalErrorException {
-        try (Connection connection = ConnectionPool.getConnection();
-             PreparedStatement statement = connection.prepareStatement(FIND_BY_CODE_PAIR)) {
-            statement.setObject(1, baseCurrencyCode);
-            statement.setObject(2, targetCurrencyCode);
-            ResultSet resultSet = statement.executeQuery();
-            return resultSet.next() ? Optional.of(buildExchangeRate(resultSet)) : Optional.empty();
-        } catch (SQLException e) {
-            throw new InternalErrorException("something went wrong...");
-        }
-    }
+//    public Optional<ExchangeRate> findByCodePair(String baseCurrencyCode, String targetCurrencyCode) throws InternalErrorException {
+//        try (Connection connection = ConnectionPool.getConnection();
+//             PreparedStatement statement = connection.prepareStatement(FIND_BY_CODE_PAIR)) {
+//            statement.setObject(1, baseCurrencyCode);
+//            statement.setObject(2, targetCurrencyCode);
+//            ResultSet resultSet = statement.executeQuery();
+//            return resultSet.next() ? Optional.of(buildExchangeRate(resultSet)) : Optional.empty();
+//        } catch (SQLException e) {
+//            throw new InternalErrorException("something went wrong...");
+//        }
+//    }
 
     private ExchangeRate buildExchangeRate(ResultSet resultSet) throws SQLException {
+        Currency baseCurrency = new Currency(
+            resultSet.getObject("b_id", Integer.class),
+            resultSet.getObject("b_code", String.class),
+            resultSet.getObject("b_full_name", String.class),
+            resultSet.getObject("b_sign", String.class)
+        );
+
+        Currency targetCurrency = new Currency(
+            resultSet.getObject("t_id", Integer.class),
+            resultSet.getObject("t_code", String.class),
+            resultSet.getObject("t_full_name", String.class),
+            resultSet.getObject("t_sign", String.class)
+        );
+
         return new ExchangeRate(
-                resultSet.getObject("id", Integer.class),
-                resultSet.getObject("base_currency_id", Integer.class),
-                resultSet.getObject("target_currency_id", Integer.class),
-                resultSet.getObject("rate", BigDecimal.class)
+            resultSet.getObject("er_id", Integer.class),
+            baseCurrency,
+            targetCurrency,
+            resultSet.getObject("er_rate", BigDecimal.class)
         );
     }
 
