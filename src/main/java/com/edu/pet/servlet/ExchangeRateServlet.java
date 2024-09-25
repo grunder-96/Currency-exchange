@@ -37,17 +37,17 @@ public class ExchangeRateServlet extends HttpServlet {
 
             String currencyPair = maybeCurrencyPair.get().replace("/", "");
             String baseCurrencyCode;
-            String targetCurrencycode;
+            String targetCurrencyCode;
 
             if (!(currencyPair.matches("[a-zA-Z]{6}") &&
                   CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
-                  CurrencyCodeValidator.isValid(targetCurrencycode = currencyPair.substring(3)))) {
+                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3)))) {
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
                 return;
             }
 
-            Optional<RateDto> maybeExchangeRateDto = exchangeRateService.findByCodePair(baseCurrencyCode, targetCurrencycode);
+            Optional<RateDto> maybeExchangeRateDto = exchangeRateService.findByCodePair(baseCurrencyCode, targetCurrencyCode);
 
             if (maybeExchangeRateDto.isEmpty()) {
                 resp.setStatus(SC_NOT_FOUND);
