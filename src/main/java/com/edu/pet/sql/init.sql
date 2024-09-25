@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS exchange_rates (
     target_currency_id INTEGER NOT NULL,
     rate REAL NOT NULL CHECK (rate > 0),
     FOREIGN KEY (base_currency_id) REFERENCES currencies(id),
-    FOREIGN KEY (target_currency_id) REFERENCES currencies(id)
+    FOREIGN KEY (target_currency_id) REFERENCES currencies(id),
+    CONSTRAINT check_same_id CHECK(base_currency_id != target_currency_id)
 ) STRICT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_base_currency_id_target_currency_id
