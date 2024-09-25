@@ -1,9 +1,11 @@
 package com.edu.pet.dao;
 
+import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.Currency;
 import com.edu.pet.model.ExchangeRate;
 import com.edu.pet.util.ConnectionPool;
+import org.sqlite.SQLiteException;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -40,12 +42,10 @@ public class ExchangeRateDao {
             """;
 
     private static final String SAVE_SQL = """
-            INSERT INTO exchange_rates(base_currency_id, target_currency_id, rate) VALUES (
-                (SELECT id FROM currencies WHERE code LIKE ?),
-                (SELECT id FROM currencies WHERE code LIKE ?),
-                ?
-            );
+            INSERT INTO exchange_rates(base_currency_id, target_currency_id, rate) VALUES (?, ?, ?);
             """;
+
+    private static final int CONSTRAINT_UNIQUE_CODE = 2067;
 
     private ExchangeRateDao() {
 
@@ -77,15 +77,20 @@ public class ExchangeRateDao {
         }
     }
 
-    public ExchangeRate save(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) throws InternalErrorException {
+    public ExchangeRate save(ExchangeRate exchangeRate) throws InternalErrorException, AlreadyExistsException {
         try (Connection connection = ConnectionPool.getConnection();
              PreparedStatement statement = connection.prepareStatement(SAVE_SQL)) {
-            statement.setObject(1, baseCurrencyCode);
-            statement.setObject(2, targetCurrencyCode);
-            statement.setObject(3, rate);
+            statement.setObject(1, exchangeRate.getBaseCurrency().getId());
+            statement.setObject(2, exchangeRate.getTargetCurrency().getId());
+            statement.setObject(3, exchangeRate.getRate());
             statement.executeUpdate();
-            return findByCodePair(baseCurrencyCode, targetCurrencyCode).get();
+            ResultSet resultSet = statement.getGeneratedKeys();
+            exchangeRate.setId(resultSet.getInt(1));
+            return exchangeRate;
         } catch (SQLException e) {
+            if (((SQLiteException) e).getResultCode().code == CONSTRAINT_UNIQUE_CODE) {
+                throw new AlreadyExistsException("currency pair with this code already exists");
+            }
             throw new InternalErrorException("something went wrong...");
         }
     }

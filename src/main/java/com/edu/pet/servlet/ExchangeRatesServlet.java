@@ -1,8 +1,10 @@
 package com.edu.pet.servlet;
 
+import com.edu.pet.dto.CreateUpdateRateDto;
 import com.edu.pet.dto.RateDto;
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
+import com.edu.pet.exception.NonExistsException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
@@ -70,15 +72,23 @@ public class ExchangeRatesServlet extends HttpServlet {
             BigDecimal rate;
             try {
                 rate = new BigDecimal(req.getParameter("rate").trim());
-            } catch (NumberFormatException e) {
+                if (rate.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalArgumentException("rate must be greater than zero");
+                }
+            } catch (RuntimeException e) {
                 resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("the rate is not valid"));
+                objectMapper.writeValue(writer,
+                        new ErrorBody(e.getClass().equals(IllegalArgumentException.class) ?
+                                e.getMessage() : "rate is not valid"));
                 return;
             }
 
-            RateDto rateDto = exchangeRateService.save(baseCurrencyCode, targetCurrencyCode, rate);
+            RateDto rateDto = exchangeRateService.save(new CreateUpdateRateDto(baseCurrencyCode, targetCurrencyCode, rate));
             resp.setStatus(SC_CREATED);
             objectMapper.writeValue(writer, rateDto);
+        } catch (NonExistsException e) {
+            resp.setStatus(SC_NOT_FOUND);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } catch (AlreadyExistsException e) {
             resp.setStatus(SC_CONFLICT);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
