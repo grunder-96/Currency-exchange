@@ -1,6 +1,6 @@
 package com.edu.pet.servlet;
 
-import com.edu.pet.dto.ExchangeRateDto;
+import com.edu.pet.dto.RateDto;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
@@ -47,7 +47,7 @@ public class ExchangeRateServlet extends HttpServlet {
                 return;
             }
 
-            Optional<ExchangeRateDto> maybeExchangeRateDto = exchangeRateService.findByCodePair(baseCurrencyCode, targetCurrencycode);
+            Optional<RateDto> maybeExchangeRateDto = exchangeRateService.findByCodePair(baseCurrencyCode, targetCurrencycode);
 
             if (maybeExchangeRateDto.isEmpty()) {
                 resp.setStatus(SC_NOT_FOUND);

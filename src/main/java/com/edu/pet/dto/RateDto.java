@@ -3,16 +3,16 @@ package com.edu.pet.dto;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public class ExchangeRateDto {
+public class RateDto {
 
     private int id;
     private CurrencyDto baseCurrency;
     private CurrencyDto targetCurrency;
     private BigDecimal rate;
 
-    public ExchangeRateDto() {}
+    public RateDto() {}
 
-    public ExchangeRateDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, BigDecimal rate) {
+    public RateDto(int id, CurrencyDto baseCurrency, CurrencyDto targetCurrency, BigDecimal rate) {
         this.id = id;
         this.baseCurrency = baseCurrency;
         this.targetCurrency = targetCurrency;

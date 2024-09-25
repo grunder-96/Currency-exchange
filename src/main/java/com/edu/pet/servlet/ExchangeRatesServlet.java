@@ -1,6 +1,6 @@
 package com.edu.pet.servlet;
 
-import com.edu.pet.dto.ExchangeRateDto;
+import com.edu.pet.dto.RateDto;
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ErrorBody;
@@ -76,9 +76,9 @@ public class ExchangeRatesServlet extends HttpServlet {
                 return;
             }
 
-            ExchangeRateDto exchangeRateDto = exchangeRateService.save(baseCurrencyCode, targetCurrencyCode, rate);
+            RateDto rateDto = exchangeRateService.save(baseCurrencyCode, targetCurrencyCode, rate);
             resp.setStatus(SC_CREATED);
-            objectMapper.writeValue(writer, exchangeRateDto);
+            objectMapper.writeValue(writer, rateDto);
         } catch (AlreadyExistsException e) {
             resp.setStatus(SC_CONFLICT);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));

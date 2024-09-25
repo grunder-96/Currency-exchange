@@ -1,9 +1,7 @@
 package com.edu.pet.service;
 
-import com.edu.pet.dao.CurrencyDao;
 import com.edu.pet.dao.ExchangeRateDao;
-import com.edu.pet.dto.CreateCurrencyDto;
-import com.edu.pet.dto.ExchangeRateDto;
+import com.edu.pet.dto.RateDto;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.model.ExchangeRate;
 import org.modelmapper.ModelMapper;
@@ -22,20 +20,20 @@ public class ExchangeRateService {
 
     }
 
-    public List<ExchangeRateDto> findAll() throws InternalErrorException {
+    public List<RateDto> findAll() throws InternalErrorException {
         List<ExchangeRate> exchangeRates = exchangeRateDao.findAll();
         return exchangeRates.stream()
-                .map(exchangeRate -> modelMapper.map(exchangeRate, ExchangeRateDto.class))
+                .map(exchangeRate -> modelMapper.map(exchangeRate, RateDto.class))
                 .toList();
     }
 
-    public Optional<ExchangeRateDto> findByCodePair(String baseCurrencyCode, String targetCurrencyCode) throws InternalErrorException {
+    public Optional<RateDto> findByCodePair(String baseCurrencyCode, String targetCurrencyCode) throws InternalErrorException {
         Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(baseCurrencyCode, targetCurrencyCode);
-        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, ExchangeRateDto.class));
+        return maybeExchangeRate.map(exchangeRate -> modelMapper.map(maybeExchangeRate, RateDto.class));
     }
 
-    public ExchangeRateDto save(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) throws InternalErrorException {
-        return modelMapper.map(exchangeRateDao.save(baseCurrencyCode, targetCurrencyCode, rate), ExchangeRateDto.class);
+    public RateDto save(String baseCurrencyCode, String targetCurrencyCode, BigDecimal rate) throws InternalErrorException {
+        return modelMapper.map(exchangeRateDao.save(baseCurrencyCode, targetCurrencyCode, rate), RateDto.class);
     }
 
     public static ExchangeRateService getInstance() {
