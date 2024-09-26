@@ -11,7 +11,6 @@ import com.edu.pet.model.Currency;
 import com.edu.pet.model.ExchangeRate;
 import org.modelmapper.ModelMapper;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,15 +38,25 @@ public class ExchangeRateService {
     }
 
     public RateDto save(CreateUpdateRateDto dto) throws InternalErrorException, NonExistsException, AlreadyExistsException {
+        return modelMapper.map(exchangeRateDao.save(convertToExchangeRate(dto)), RateDto.class);
+    }
+
+    public RateDto update(CreateUpdateRateDto dto) throws InternalErrorException, NonExistsException {
+        return modelMapper.map(exchangeRateDao.update(convertToExchangeRate(dto)), RateDto.class);
+    }
+
+    private ExchangeRate convertToExchangeRate(CreateUpdateRateDto dto) throws NonExistsException {
         Optional<Currency> maybeBaseCurrency = currencyDao.findByCode(dto.getBaseCurrencyCode());
         Optional<Currency> maybeTargetCurrency = currencyDao.findByCode(dto.getTargetCurrencyCode());
 
+        ExchangeRate createExchangeRate;
+
         if (maybeBaseCurrency.isPresent() && maybeTargetCurrency.isPresent()) {
-            ExchangeRate createExchangeRate = new ExchangeRate();
+            createExchangeRate = new ExchangeRate();
             createExchangeRate.setBaseCurrency(maybeBaseCurrency.get());
             createExchangeRate.setTargetCurrency(maybeTargetCurrency.get());
             createExchangeRate.setRate(dto.getRate());
-            return modelMapper.map(exchangeRateDao.save(createExchangeRate), RateDto.class);
+            return createExchangeRate;
         }
 
         throw new NonExistsException("One (or both) currencies from the currency pair do not exist in the database");

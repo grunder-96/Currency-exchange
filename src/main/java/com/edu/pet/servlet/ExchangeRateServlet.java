@@ -1,11 +1,14 @@
 package com.edu.pet.servlet;
 
+import com.edu.pet.dto.CreateUpdateRateDto;
 import com.edu.pet.dto.RateDto;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
+import com.edu.pet.util.validation.ParamsValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static jakarta.servlet.http.HttpServletResponse.*;
@@ -22,6 +27,15 @@ public class ExchangeRateServlet extends HttpServlet {
 
     private final ExchangeRateService exchangeRateService = ExchangeRateService.getInstance();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (req.getMethod().equalsIgnoreCase("PATCH")){
+            doPatch(req, resp);
+        } else {
+            super.service(req, resp);
+        }
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -57,6 +71,62 @@ public class ExchangeRateServlet extends HttpServlet {
 
             resp.setStatus(SC_OK);
             objectMapper.writeValue(writer, maybeExchangeRateDto.get());
+        } finally {
+            writer.close();
+
+        }
+    }
+
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        PrintWriter writer = resp.getWriter();
+        Optional<String> maybeCurrencyPair = Optional.ofNullable(req.getPathInfo());
+
+        try {
+            if (maybeCurrencyPair.isEmpty()) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("currency pair missing in url"));
+                return;
+            }
+
+            String currencyPair = maybeCurrencyPair.get().replace("/", "");
+            String baseCurrencyCode;
+            String targetCurrencyCode;
+
+            if (!(currencyPair.matches("[a-zA-Z]{6}") &&
+                  CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
+                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3)))) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
+                return;
+            }
+
+            String maybeRate = req.getReader().readLine().replace("%20", "");
+
+            if (maybeRate.isEmpty() || !maybeRate.contains("rate=")) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("rate missing or empty"));
+                return;
+            }
+
+            BigDecimal rate;
+
+            try {
+                rate = new BigDecimal(maybeRate.replace("rate=", ""));
+                if (rate.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalArgumentException("rate must be greater than zero");
+                }
+            } catch (RuntimeException e) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer,
+                        new ErrorBody(e.getClass().equals(IllegalArgumentException.class) ?
+                                e.getMessage() : "rate is not valid"));
+                return;
+            }
+
+            RateDto updatedRateDto = exchangeRateService.update(new CreateUpdateRateDto(baseCurrencyCode, targetCurrencyCode, rate));
+
+            resp.setStatus(SC_OK);
+            objectMapper.writeValue(writer, updatedRateDto);
         } finally {
             writer.close();
 

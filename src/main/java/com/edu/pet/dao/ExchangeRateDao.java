@@ -45,6 +45,12 @@ public class ExchangeRateDao {
             INSERT INTO exchange_rates(base_currency_id, target_currency_id, rate) VALUES (?, ?, ?);
             """;
 
+    private static final String UPDATE_SQL = """
+            UPDATE exchange_rates
+                SET rate = ?
+            WHERE base_currency_id = ? AND target_currency_id = ?;
+            """;
+
     private static final int CONSTRAINT_UNIQUE_CODE = 2067;
 
     private ExchangeRateDao() {
@@ -91,6 +97,21 @@ public class ExchangeRateDao {
             if (((SQLiteException) e).getResultCode().code == CONSTRAINT_UNIQUE_CODE) {
                 throw new AlreadyExistsException("currency pair with this code already exists");
             }
+            throw new InternalErrorException("something went wrong...");
+        }
+    }
+
+    public ExchangeRate update(ExchangeRate exchangeRate) {
+        try (Connection connection = ConnectionPool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(UPDATE_SQL)) {
+            statement.setObject(1, exchangeRate.getRate());
+            statement.setObject(2, exchangeRate.getBaseCurrency().getId());
+            statement.setObject(3, exchangeRate.getTargetCurrency().getId());
+            statement.executeUpdate();
+            ResultSet resultSet = statement.getGeneratedKeys();
+            exchangeRate.setId(resultSet.getInt(1));
+            return exchangeRate;
+        } catch (SQLException e) {
             throw new InternalErrorException("something went wrong...");
         }
     }
