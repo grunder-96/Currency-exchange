@@ -51,7 +51,6 @@ public class ExchangeRatesServlet extends HttpServlet {
 
         try {
             if (!paramsValidator.isValid()) {
-                System.out.println("ass");
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty - %s".formatted(
                         String.join(", ", paramsValidator.getInvalidParams())
