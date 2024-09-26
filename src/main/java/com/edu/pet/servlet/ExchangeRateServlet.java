@@ -5,10 +5,8 @@ import com.edu.pet.dto.RateDto;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
-import com.edu.pet.util.validation.ParamsValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 import static jakarta.servlet.http.HttpServletResponse.*;
@@ -100,18 +97,19 @@ public class ExchangeRateServlet extends HttpServlet {
                 return;
             }
 
-            String maybeRate = req.getReader().readLine().replace("%20", "");
+            Optional<String> maybeRate = Optional.ofNullable(req.getReader().readLine());
 
-            if (maybeRate.isEmpty() || !maybeRate.contains("rate=")) {
+            if (maybeRate.isEmpty() || !maybeRate.get().contains("rate=")) {
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("rate missing or empty"));
                 return;
             }
 
+            String rateValue = maybeRate.get().replace("rate=", "");
             BigDecimal rate;
 
             try {
-                rate = new BigDecimal(maybeRate.replace("rate=", ""));
+                rate = new BigDecimal(rateValue);
                 if (rate.compareTo(BigDecimal.ZERO) <= 0) {
                     throw new IllegalArgumentException("rate must be greater than zero");
                 }
