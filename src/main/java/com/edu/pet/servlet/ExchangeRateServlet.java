@@ -2,6 +2,8 @@ package com.edu.pet.servlet;
 
 import com.edu.pet.dto.CreateUpdateRateDto;
 import com.edu.pet.dto.RateDto;
+import com.edu.pet.exception.InternalErrorException;
+import com.edu.pet.exception.NonExistsException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
@@ -68,9 +70,11 @@ public class ExchangeRateServlet extends HttpServlet {
 
             resp.setStatus(SC_OK);
             objectMapper.writeValue(writer, maybeExchangeRateDto.get());
+        } catch (InternalErrorException e) {
+            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
-
         }
     }
 
@@ -125,6 +129,12 @@ public class ExchangeRateServlet extends HttpServlet {
 
             resp.setStatus(SC_OK);
             objectMapper.writeValue(writer, updatedRateDto);
+        } catch (NonExistsException e) {
+            resp.setStatus(SC_NOT_FOUND);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+        } catch (InternalErrorException e) {
+            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
 
