@@ -38,14 +38,6 @@ public class ExchangeRateService {
     }
 
     public RateDto save(CreateUpdateRateDto dto) throws InternalErrorException, NonExistsException, AlreadyExistsException {
-        return modelMapper.map(exchangeRateDao.save(convertToExchangeRate(dto)), RateDto.class);
-    }
-
-    public RateDto update(CreateUpdateRateDto dto) throws InternalErrorException, NonExistsException {
-        return modelMapper.map(exchangeRateDao.update(convertToExchangeRate(dto)), RateDto.class);
-    }
-
-    private ExchangeRate convertToExchangeRate(CreateUpdateRateDto dto) throws NonExistsException {
         Optional<Currency> maybeBaseCurrency = currencyDao.findByCode(dto.getBaseCurrencyCode());
         Optional<Currency> maybeTargetCurrency = currencyDao.findByCode(dto.getTargetCurrencyCode());
 
@@ -56,10 +48,20 @@ public class ExchangeRateService {
             createExchangeRate.setBaseCurrency(maybeBaseCurrency.get());
             createExchangeRate.setTargetCurrency(maybeTargetCurrency.get());
             createExchangeRate.setRate(dto.getRate());
-            return createExchangeRate;
+            return modelMapper.map(exchangeRateDao.save(createExchangeRate), RateDto.class);
         }
-
         throw new NonExistsException("One (or both) currencies from the currency pair do not exist in the database");
+    }
+
+    public RateDto update(CreateUpdateRateDto dto) throws InternalErrorException, NonExistsException {
+        Optional<ExchangeRate> maybeExchangeRate = exchangeRateDao.findByCodePair(dto.getBaseCurrencyCode(), dto.getTargetCurrencyCode());
+        if (maybeExchangeRate.isPresent()) {
+            ExchangeRate exchangeRate = maybeExchangeRate.get();
+            exchangeRate.setRate(dto.getRate());
+            exchangeRateDao.update(exchangeRate);
+            return modelMapper.map(exchangeRate, RateDto.class);
+        }
+        throw new NonExistsException("currency pair does not exist in the database");
     }
 
     public static ExchangeRateService getInstance() {
