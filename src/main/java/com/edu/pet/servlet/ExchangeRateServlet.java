@@ -52,11 +52,19 @@ public class ExchangeRateServlet extends HttpServlet {
             String baseCurrencyCode;
             String targetCurrencyCode;
 
-            if (!(currencyPair.matches("[a-zA-Z]{6}") &&
+            if (!(
+                  currencyPair.matches("[a-zA-Z]{6}") &&
                   CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
-                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3)))) {
+                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3))
+                )) {
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
+                return;
+            }
+
+            if (baseCurrencyCode.compareToIgnoreCase(targetCurrencyCode) == 0) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("base and target currencies are the same"));
                 return;
             }
 
@@ -93,11 +101,19 @@ public class ExchangeRateServlet extends HttpServlet {
             String baseCurrencyCode;
             String targetCurrencyCode;
 
-            if (!(currencyPair.matches("[a-zA-Z]{6}") &&
+            if (!(
+                  currencyPair.matches("[a-zA-Z]{6}") &&
                   CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
-                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3)))) {
+                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3))
+                )) {
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
+                return;
+            }
+
+            if (baseCurrencyCode.compareToIgnoreCase(targetCurrencyCode) == 0) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("base and target currencies are the same"));
                 return;
             }
 
@@ -137,7 +153,6 @@ public class ExchangeRateServlet extends HttpServlet {
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
-
         }
     }
 }

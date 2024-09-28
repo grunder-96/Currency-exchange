@@ -61,10 +61,15 @@ public class ExchangeRatesServlet extends HttpServlet {
             String baseCurrencyCode = req.getParameter("baseCurrencyCode").trim();
             String targetCurrencyCode = req.getParameter("targetCurrencyCode").trim();
 
-            if (!(CurrencyCodeValidator.isValid(baseCurrencyCode)
-                  || CurrencyCodeValidator.isValid(targetCurrencyCode))) {
+            if (!(CurrencyCodeValidator.isValid(baseCurrencyCode) && CurrencyCodeValidator.isValid(targetCurrencyCode))) {
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
+                return;
+            }
+
+            if (baseCurrencyCode.compareToIgnoreCase(targetCurrencyCode) == 0) {
+                resp.setStatus(SC_BAD_REQUEST);
+                objectMapper.writeValue(writer, new ErrorBody("base and target currencies are the same"));
                 return;
             }
 
