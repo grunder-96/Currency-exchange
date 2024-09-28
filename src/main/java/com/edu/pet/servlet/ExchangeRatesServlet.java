@@ -34,11 +34,11 @@ public class ExchangeRatesServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         PrintWriter writer = resp.getWriter();
         try {
-            objectMapper.writeValue(writer,exchangeRateService.findAll());
             resp.setStatus(SC_OK);
+            objectMapper.writeValue(writer,exchangeRateService.findAll());
         } catch (InternalErrorException e) {
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
             resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
         } finally {
             writer.close();
         }
