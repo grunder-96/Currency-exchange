@@ -2,7 +2,7 @@ CREATE TABLE  IF NOT EXISTS currencies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL UNIQUE CHECK (length(code) = 3) COLLATE NOCASE,
     full_name TEXT NOT NULL UNIQUE CHECK (length(full_name) BETWEEN 1 AND 32),
-    sign TEXT NOT NULL CHECK (length(sign) BETWEEN 1 AND 3)
+    sign TEXT NOT NULL CHECK (length(sign) BETWEEN 1 AND 4)
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS exchange_rates (
