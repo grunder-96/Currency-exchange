@@ -51,10 +51,21 @@ public class ExchangeRateDao {
             WHERE id = ?;
             """;
 
+    private static final String FIND_BY_CROSS_RATE = """
+            SELECT
+                er.id er_id,
+                b.id b_id, b.code b_code, b.full_name b_full_name, b.sign b_sign,
+                t.id t_id, t.code t_code, t.full_name t_full_name, t.sign t_sign,
+                er.rate er_rate
+            FROM exchange_rates er
+                JOIN currencies b on er.base_currency_id = b.id
+                JOIN currencies t ON er.target_currency_id = t.id
+            WHERE b.code LIKE 'USD' AND t.code LIKE ? OR t.code LIKE ?;
+            """;
+
     private static final int CONSTRAINT_UNIQUE_CODE = 2067;
 
     private ExchangeRateDao() {
-
     }
 
     public List<ExchangeRate> findAll() throws InternalErrorException {
@@ -107,6 +118,22 @@ public class ExchangeRateDao {
             statement.setObject(1, exchangeRate.getRate());
             statement.setObject(2, exchangeRate.getId());
             statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new InternalErrorException("something went wrong...");
+        }
+    }
+
+    public List<ExchangeRate> findByCrossRate(String baseCurrencyCode, String targetCurrencyCode) throws InternalErrorException {
+        try (Connection connection = ConnectionPool.getConnection();
+             PreparedStatement statement = connection.prepareStatement(FIND_BY_CROSS_RATE)) {
+            statement.setObject(1, baseCurrencyCode);
+            statement.setObject(2, targetCurrencyCode);
+            ResultSet resultSet = statement.executeQuery();
+            List<ExchangeRate> exchangeRates = new ArrayList<>();
+            while (resultSet.next()) {
+                exchangeRates.add(buildExchangeRate(resultSet));
+            }
+            return exchangeRates;
         } catch (SQLException e) {
             throw new InternalErrorException("something went wrong...");
         }
