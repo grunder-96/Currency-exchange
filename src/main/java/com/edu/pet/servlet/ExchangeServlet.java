@@ -43,8 +43,10 @@ public class ExchangeServlet extends HttpServlet {
             String baseCurrencyCode = req.getParameter("from").trim();
             String targetCurrencyCode = req.getParameter("to").trim();
 
-            if (!(CurrencyCodeValidator.isValid(baseCurrencyCode)
-                  || CurrencyCodeValidator.isValid(targetCurrencyCode))) {
+            if (!(
+                    CurrencyCodeValidator.isValid(baseCurrencyCode) &&
+                    CurrencyCodeValidator.isValid(targetCurrencyCode)
+                )) {
                 resp.setStatus(SC_BAD_REQUEST);
                 objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
                 return;
