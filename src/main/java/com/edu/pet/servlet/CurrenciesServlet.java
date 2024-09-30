@@ -69,9 +69,9 @@ public class CurrenciesServlet extends HttpServlet {
                     req.getParameter("sign").trim()
             );
 
-            CurrencyDto currencvDto = currencyService.save(createCurrencyDto);
+            CurrencyDto currencyDto = currencyService.save(createCurrencyDto);
             resp.setStatus(SC_CREATED);
-            objectMapper.writeValue(writer, currencvDto);
+            objectMapper.writeValue(writer, currencyDto);
         } catch (AlreadyExistsException e) {
             resp.setStatus(SC_CONFLICT);
             objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
