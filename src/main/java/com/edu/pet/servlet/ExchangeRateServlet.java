@@ -25,7 +25,6 @@ import static jakarta.servlet.http.HttpServletResponse.*;
 public class ExchangeRateServlet extends HttpServlet {
 
     private final ExchangeRateService exchangeRateService = ExchangeRateService.getInstance();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
