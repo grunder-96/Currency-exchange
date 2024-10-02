@@ -1,11 +1,11 @@
-package com.edu.pet.util.validation;
+package com.edu.pet.servlet;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 import java.util.Objects;
 
-public class EmptyParamsValidator {
+final class EmptyParamsValidator {
 
     private final List<String> requiredParams;
     private final HttpServletRequest req;
