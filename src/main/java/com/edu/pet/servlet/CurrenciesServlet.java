@@ -23,7 +23,6 @@ import static jakarta.servlet.http.HttpServletResponse.*;
 public class CurrenciesServlet extends HttpServlet {
 
     private final CurrencyService currencyService = CurrencyService.getInstance();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
