@@ -6,7 +6,8 @@ import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.exception.NonExistsException;
 import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
-import com.edu.pet.util.validation.CurrencyCodeValidator;
+import com.edu.pet.util.ResponseWrapper;
+import com.edu.pet.util.validation.CurrencyPairValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -38,90 +39,63 @@ public class ExchangeRateServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
+
         Optional<String> maybeCurrencyPair = Optional.ofNullable(req.getPathInfo());
 
+        if (maybeCurrencyPair.isEmpty()) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "currency pair missing in url");
+            return;
+        }
+
+        String currencyPair = maybeCurrencyPair.get().replace("/", "");
+
+        if (!CurrencyPairValidator.isValid(currencyPair)) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, CurrencyPairValidator.isCurrenciesSame(currencyPair) ?
+                    "base and target currencies are the same" : "one or both currency codes are not valid");
+            return;
+        }
+
+        String baseCurrencyCode = currencyPair.substring(0, 3);
+        String targetCurrencyCode = currencyPair.substring(3);
+
         try {
-            if (maybeCurrencyPair.isEmpty()) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("currency pair missing in url"));
-                return;
-            }
-
-            String currencyPair = maybeCurrencyPair.get().replace("/", "");
-            String baseCurrencyCode;
-            String targetCurrencyCode;
-
-            if (!(
-                  currencyPair.matches("[a-zA-Z]{6}") &&
-                  CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
-                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3))
-                )) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
-                return;
-            }
-
-            if (baseCurrencyCode.compareToIgnoreCase(targetCurrencyCode) == 0) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("base and target currencies are the same"));
-                return;
-            }
-
             Optional<RateDto> maybeExchangeRateDto = exchangeRateService.findByCodePair(baseCurrencyCode, targetCurrencyCode);
 
             if (maybeExchangeRateDto.isEmpty()) {
-                resp.setStatus(SC_NOT_FOUND);
-                objectMapper.writeValue(writer, new ErrorBody("exchange rate for the pair not found"));
+                ResponseWrapper.configureErrorResponse(resp, SC_NOT_FOUND, "exchange rate for the pair not found");
                 return;
             }
 
-            resp.setStatus(SC_OK);
-            objectMapper.writeValue(writer, maybeExchangeRateDto.get());
+            ResponseWrapper.configureResponse(resp, SC_OK, maybeExchangeRateDto.get());
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
-        } finally {
-            writer.close();
+            ResponseWrapper.configureErrorResponse(resp, SC_INTERNAL_SERVER_ERROR, e);
         }
     }
 
     protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
         Optional<String> maybeCurrencyPair = Optional.ofNullable(req.getPathInfo());
 
-        try {
             if (maybeCurrencyPair.isEmpty()) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("currency pair missing in url"));
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "currency pair missing in url");
                 return;
             }
 
             String currencyPair = maybeCurrencyPair.get().replace("/", "");
-            String baseCurrencyCode;
-            String targetCurrencyCode;
 
-            if (!(
-                  currencyPair.matches("[a-zA-Z]{6}") &&
-                  CurrencyCodeValidator.isValid(baseCurrencyCode = currencyPair.substring(0, 3)) &&
-                  CurrencyCodeValidator.isValid(targetCurrencyCode = currencyPair.substring(3))
-                )) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
+            if (!CurrencyPairValidator.isValid(currencyPair)) {
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST,
+                        CurrencyPairValidator.isCurrenciesSame(currencyPair) ?
+                                "base and target currencies are the same" : "one or both currency codes are not valid");
                 return;
             }
 
-            if (baseCurrencyCode.compareToIgnoreCase(targetCurrencyCode) == 0) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("base and target currencies are the same"));
-                return;
-            }
+            String baseCurrencyCode = currencyPair.substring(0, 3);
+            String targetCurrencyCode = currencyPair.substring(3);
 
             Optional<String> maybeRate = Optional.ofNullable(req.getReader().readLine());
 
             if (maybeRate.isEmpty() || !maybeRate.get().contains("rate=")) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("rate missing or empty"));
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "rate missing or empty");
                 return;
             }
 
@@ -134,25 +108,18 @@ public class ExchangeRateServlet extends HttpServlet {
                     throw new IllegalArgumentException("rate must be greater than zero");
                 }
             } catch (RuntimeException e) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer,
-                        new ErrorBody(e.getClass().equals(IllegalArgumentException.class) ?
-                                e.getMessage() : "rate is not valid"));
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, e.getClass().equals(IllegalArgumentException.class) ?
+                        e.getMessage() : "rate is not valid");
                 return;
             }
 
+        try {
             RateDto updatedRateDto = exchangeRateService.update(new CreateUpdateRateDto(baseCurrencyCode, targetCurrencyCode, rate));
-
-            resp.setStatus(SC_OK);
-            objectMapper.writeValue(writer, updatedRateDto);
+            ResponseWrapper.configureResponse(resp, SC_OK, updatedRateDto);
         } catch (NonExistsException e) {
-            resp.setStatus(SC_NOT_FOUND);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+            ResponseWrapper.configureErrorResponse(resp, SC_NOT_FOUND, e);
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
-        } finally {
-            writer.close();
+            ResponseWrapper.configureErrorResponse(resp, SC_INTERNAL_SERVER_ERROR, e);
         }
     }
 }
