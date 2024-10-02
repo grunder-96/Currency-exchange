@@ -9,6 +9,7 @@ public class ParamsValidator {
 
     private final List<String> requiredParams;
     private final HttpServletRequest req;
+    private List<String> invalidParams;
 
     public ParamsValidator(HttpServletRequest req, List<String> requiredParams) {
         this.req = Objects.requireNonNull(req, "request is null");
@@ -20,8 +21,15 @@ public class ParamsValidator {
     }
 
     public List<String> getInvalidParams() {
-        return requiredParams.stream()
+        if (Objects.isNull(invalidParams)) {
+            return invalidParams = requiredParams.stream()
                 .filter(param -> Objects.isNull(req.getParameter(param)) || req.getParameter(param).isBlank())
                 .toList();
+        }
+        return invalidParams;
+    }
+
+    public String getInvalidParamsAsString() {
+        return String.join(", ", getInvalidParams());
     }
 }
