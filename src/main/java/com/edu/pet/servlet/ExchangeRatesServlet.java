@@ -5,11 +5,9 @@ import com.edu.pet.dto.RateDto;
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.exception.NonExistsException;
-import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
-import com.edu.pet.util.validation.CurrencyCodeValidator;
-import com.edu.pet.util.validation.ParamsValidator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.edu.pet.util.ResponseWrapper;
+import com.edu.pet.util.validation.CurrencyPairValidator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -28,48 +25,33 @@ import static jakarta.servlet.http.HttpServletResponse.SC_CONFLICT;
 public class ExchangeRatesServlet extends HttpServlet {
 
     private final ExchangeRateService exchangeRateService = ExchangeRateService.getInstance();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
         try {
-            resp.setStatus(SC_OK);
-            objectMapper.writeValue(writer,exchangeRateService.findAll());
+            ResponseWrapper.configureResponse(resp, SC_OK, exchangeRateService.findAll());
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
-        } finally {
-            writer.close();
+            ResponseWrapper.configureErrorResponse(resp, SC_INTERNAL_SERVER_ERROR, e);
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
-        ParamsValidator paramsValidator = new ParamsValidator(req, List.of("baseCurrencyCode", "targetCurrencyCode", "rate"));
+        EmptyParamsValidator emptyParamsValidator = new EmptyParamsValidator(req, List.of("baseCurrencyCode", "targetCurrencyCode", "rate"));
 
-        try {
-            if (!paramsValidator.isValid()) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty - %s".formatted(
-                        String.join(", ", paramsValidator.getInvalidParams())
-                )));
+            if (!emptyParamsValidator.isValid()) {
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST,
+                        "parameter(-s) not found or empty - %s".formatted(emptyParamsValidator.getInvalidParamsAsString()));
                 return;
             }
 
             String baseCurrencyCode = req.getParameter("baseCurrencyCode").trim();
             String targetCurrencyCode = req.getParameter("targetCurrencyCode").trim();
 
-            if (!(CurrencyCodeValidator.isValid(baseCurrencyCode) && CurrencyCodeValidator.isValid(targetCurrencyCode))) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("one or both currency codes are not valid"));
-                return;
-            }
-
-            if (baseCurrencyCode.compareToIgnoreCase(targetCurrencyCode) == 0) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("base and target currencies are the same"));
+            if (!CurrencyPairValidator.isValid(baseCurrencyCode, targetCurrencyCode)) {
+                ResponseWrapper.configureErrorResponse(resp,SC_BAD_REQUEST,
+                    CurrencyPairValidator.isCurrenciesSame(baseCurrencyCode, targetCurrencyCode) ?
+                            "base and target currencies are the same" : "one or both currency codes are not valid");
                 return;
             }
 
@@ -80,27 +62,20 @@ public class ExchangeRatesServlet extends HttpServlet {
                     throw new IllegalArgumentException("rate must be greater than zero");
                 }
             } catch (RuntimeException e) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer,
-                        new ErrorBody(e.getClass().equals(IllegalArgumentException.class) ?
-                                e.getMessage() : "rate is not valid"));
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, e.getClass().equals(IllegalArgumentException.class) ?
+                        e.getMessage() : "rate is not valid");
                 return;
             }
 
+        try {
             RateDto rateDto = exchangeRateService.save(new CreateUpdateRateDto(baseCurrencyCode, targetCurrencyCode, rate));
-            resp.setStatus(SC_CREATED);
-            objectMapper.writeValue(writer, rateDto);
+            ResponseWrapper.configureResponse(resp, SC_CREATED, rateDto);
         } catch (NonExistsException e) {
-            resp.setStatus(SC_NOT_FOUND);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+            ResponseWrapper.configureErrorResponse(resp, SC_NOT_FOUND, e);
         } catch (AlreadyExistsException e) {
-            resp.setStatus(SC_CONFLICT);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+            ResponseWrapper.configureErrorResponse(resp, SC_CONFLICT, e);
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
-        } finally {
-            writer.close();
+            ResponseWrapper.configureErrorResponse(resp, SC_INTERNAL_SERVER_ERROR, e);
         }
     }
 }
