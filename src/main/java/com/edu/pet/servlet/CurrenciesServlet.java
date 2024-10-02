@@ -7,7 +7,6 @@ import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.util.ResponseWrapper;
 import com.edu.pet.service.CurrencyService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
