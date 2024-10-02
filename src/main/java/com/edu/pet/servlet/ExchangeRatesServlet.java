@@ -7,6 +7,7 @@ import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.exception.NonExistsException;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.ResponseWrapper;
+import com.edu.pet.util.parsing.DecimalParamParser;
 import com.edu.pet.util.validation.CurrencyPairValidator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -28,6 +29,7 @@ public class ExchangeRatesServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
         try {
             ResponseWrapper.configureResponse(resp, SC_OK, exchangeRateService.findAll());
         } catch (InternalErrorException e) {
@@ -37,6 +39,7 @@ public class ExchangeRatesServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
         EmptyParamsValidator emptyParamsValidator = new EmptyParamsValidator(req, List.of("baseCurrencyCode", "targetCurrencyCode", "rate"));
 
             if (!emptyParamsValidator.isValid()) {
@@ -49,21 +52,16 @@ public class ExchangeRatesServlet extends HttpServlet {
             String targetCurrencyCode = req.getParameter("targetCurrencyCode").trim();
 
             if (!CurrencyPairValidator.isValid(baseCurrencyCode, targetCurrencyCode)) {
-                ResponseWrapper.configureErrorResponse(resp,SC_BAD_REQUEST,
-                    CurrencyPairValidator.isCurrenciesSame(baseCurrencyCode, targetCurrencyCode) ?
-                            "base and target currencies are the same" : "one or both currency codes are not valid");
+                ResponseWrapper.configureErrorResponse(resp,SC_BAD_REQUEST, CurrencyPairValidator.isCurrenciesSame(baseCurrencyCode, targetCurrencyCode) ?
+                    "base and target currencies are the same" : "one or both currency codes are not valid");
                 return;
             }
 
             BigDecimal rate;
             try {
-                rate = new BigDecimal(req.getParameter("rate").trim());
-                if (rate.compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new IllegalArgumentException("rate must be greater than zero");
-                }
+                rate = DecimalParamParser.parse(req.getParameter("rate"));
             } catch (RuntimeException e) {
-                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, e.getClass().equals(IllegalArgumentException.class) ?
-                        e.getMessage() : "rate is not valid");
+                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, e.getMessage().formatted("rate"));
                 return;
             }
 

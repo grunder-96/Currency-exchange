@@ -4,9 +4,9 @@ import com.edu.pet.dto.CreateUpdateRateDto;
 import com.edu.pet.dto.RateDto;
 import com.edu.pet.exception.InternalErrorException;
 import com.edu.pet.exception.NonExistsException;
-import com.edu.pet.model.ErrorBody;
 import com.edu.pet.service.ExchangeRateService;
 import com.edu.pet.util.ResponseWrapper;
+import com.edu.pet.util.parsing.DecimalParamParser;
 import com.edu.pet.util.validation.CurrencyPairValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -16,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -73,45 +72,40 @@ public class ExchangeRateServlet extends HttpServlet {
     }
 
     protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
         Optional<String> maybeCurrencyPair = Optional.ofNullable(req.getPathInfo());
 
-            if (maybeCurrencyPair.isEmpty()) {
-                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "currency pair missing in url");
-                return;
-            }
+        if (maybeCurrencyPair.isEmpty()) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "currency pair missing in url");
+            return;
+        }
 
-            String currencyPair = maybeCurrencyPair.get().replace("/", "");
+        String currencyPair = maybeCurrencyPair.get().replace("/", "");
 
-            if (!CurrencyPairValidator.isValid(currencyPair)) {
-                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST,
-                        CurrencyPairValidator.isCurrenciesSame(currencyPair) ?
-                                "base and target currencies are the same" : "one or both currency codes are not valid");
-                return;
-            }
+        if (!CurrencyPairValidator.isValid(currencyPair)) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, CurrencyPairValidator.isCurrenciesSame(currencyPair) ?
+                "base and target currencies are the same" : "one or both currency codes are not valid");
+            return;
+        }
 
-            String baseCurrencyCode = currencyPair.substring(0, 3);
-            String targetCurrencyCode = currencyPair.substring(3);
+        String baseCurrencyCode = currencyPair.substring(0, 3);
+        String targetCurrencyCode = currencyPair.substring(3);
 
-            Optional<String> maybeRate = Optional.ofNullable(req.getReader().readLine());
+        Optional<String> maybeRate = Optional.ofNullable(req.getReader().readLine());
 
-            if (maybeRate.isEmpty() || !maybeRate.get().contains("rate=")) {
-                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "rate missing or empty");
-                return;
-            }
+        if (maybeRate.isEmpty() || !maybeRate.get().contains("rate=")) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "rate missing or empty");
+            return;
+        }
 
-            String rateValue = maybeRate.get().replace("rate=", "");
-            BigDecimal rate;
-
-            try {
-                rate = new BigDecimal(rateValue);
-                if (rate.compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new IllegalArgumentException("rate must be greater than zero");
-                }
-            } catch (RuntimeException e) {
-                ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, e.getClass().equals(IllegalArgumentException.class) ?
-                        e.getMessage() : "rate is not valid");
-                return;
-            }
+        String rateValue = maybeRate.get().replace("rate=", "");
+        BigDecimal rate;
+        try {
+            rate = DecimalParamParser.parse(rateValue);
+        } catch (RuntimeException e) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, e.getMessage().formatted("rate"));
+            return;
+        }
 
         try {
             RateDto updatedRateDto = exchangeRateService.update(new CreateUpdateRateDto(baseCurrencyCode, targetCurrencyCode, rate));
