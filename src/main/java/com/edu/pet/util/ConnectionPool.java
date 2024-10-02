@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class ConnectionPool {
+public final class ConnectionPool {
 
     private static final Properties PROPERTIES;
     private static final HikariConfig CONFIG;

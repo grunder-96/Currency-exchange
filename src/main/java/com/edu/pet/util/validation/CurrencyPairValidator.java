@@ -1,6 +1,6 @@
 package com.edu.pet.util.validation;
 
-public class CurrencyPairValidator {
+public final class CurrencyPairValidator {
     
     private CurrencyPairValidator() {
         
