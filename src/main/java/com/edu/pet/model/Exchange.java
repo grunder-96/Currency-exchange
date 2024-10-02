@@ -40,7 +40,7 @@ public class Exchange {
     }
 
     public BigDecimal getRate() {
-        return rate;
+        return rate.setScale(2, RoundingMode.HALF_UP);
     }
 
     public void setRate(BigDecimal rate) {
