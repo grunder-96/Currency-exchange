@@ -56,7 +56,7 @@ public class ExchangeService {
         exchangeRate.setBaseCurrency(exchangeRate.getTargetCurrency());
         exchangeRate.setTargetCurrency(baseCurrency);
 
-        BigDecimal rate = BigDecimal.ONE.divide(exchangeRate.getRate(), 6, RoundingMode.HALF_DOWN);
+        BigDecimal rate = BigDecimal.ONE.divide(exchangeRate.getRate());
         BigDecimal convertedAmount = rate.multiply(amount);
 
         exchangeRate.setRate(rate);
@@ -68,7 +68,7 @@ public class ExchangeService {
         ExchangeRate toBaseExchangeRate = crossExchangeList.getFirst();
         ExchangeRate toTargetExchangeRate = crossExchangeList.getLast();
 
-        BigDecimal rate = toTargetExchangeRate.getRate().divide(toBaseExchangeRate.getRate(), 6, RoundingMode.HALF_DOWN);
+        BigDecimal rate = toTargetExchangeRate.getRate().divide(toBaseExchangeRate.getRate());
         BigDecimal convertedAmount = rate.multiply(amount);
 
         toTargetExchangeRate.setRate(rate);
