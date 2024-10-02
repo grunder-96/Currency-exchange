@@ -4,10 +4,9 @@ import com.edu.pet.dto.CreateCurrencyDto;
 import com.edu.pet.dto.CurrencyDto;
 import com.edu.pet.exception.AlreadyExistsException;
 import com.edu.pet.exception.InternalErrorException;
-import com.edu.pet.model.ErrorBody;
+import com.edu.pet.util.ResponseWrapper;
 import com.edu.pet.service.CurrencyService;
 import com.edu.pet.util.validation.CurrencyCodeValidator;
-import com.edu.pet.util.validation.ParamsValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 import static jakarta.servlet.http.HttpServletResponse.*;
@@ -29,57 +27,45 @@ public class CurrenciesServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
+
         try {
-            resp.setStatus(SC_OK);
-            objectMapper.writeValue(writer, currencyService.findAll());
+            ResponseWrapper.configureResponse(resp, SC_OK, currencyService.findAll());
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
-        } finally {
-            writer.close();
+            ResponseWrapper.configureErrorResponse(resp, SC_INTERNAL_SERVER_ERROR, e);
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
-        ParamsValidator paramsValidator = new ParamsValidator(req, List.of("name", "code", "sign"));
+
+        EmptyParamsValidator emptyParamsValidator = new EmptyParamsValidator(req, List.of("name", "code", "sign"));
+
+        if (!emptyParamsValidator.isValid()) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST,
+                    "parameter(-s) not found or empty - %s".formatted(emptyParamsValidator.getInvalidParamsAsString()));
+            return;
+        }
+
+        String code = req.getParameter("code").trim();
+
+        if (!CurrencyCodeValidator.isValid(code)) {
+            ResponseWrapper.configureErrorResponse(resp, SC_BAD_REQUEST, "currency code is invalid");
+            return;
+        }
+
+        CreateCurrencyDto createCurrencyDto = new CreateCurrencyDto(
+                code,
+                req.getParameter("name").trim(),
+                req.getParameter("sign").trim()
+        );
 
         try {
-            if (!paramsValidator.isValid()) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("parameter(-s) not found or empty - %s".formatted(
-                        String.join(", ", paramsValidator.getInvalidParams())
-                )));
-                return;
-            }
-
-            String code = req.getParameter("code").trim();
-
-            if (!CurrencyCodeValidator.isValid(code)) {
-                resp.setStatus(SC_BAD_REQUEST);
-                objectMapper.writeValue(writer, new ErrorBody("currency code is invalid"));
-                return;
-            }
-
-            CreateCurrencyDto createCurrencyDto = new CreateCurrencyDto(
-                    code,
-                    req.getParameter("name").trim(),
-                    req.getParameter("sign").trim()
-            );
-
             CurrencyDto currencyDto = currencyService.save(createCurrencyDto);
-            resp.setStatus(SC_CREATED);
-            objectMapper.writeValue(writer, currencyDto);
+            ResponseWrapper.configureResponse(resp, SC_CREATED, currencyDto);
         } catch (AlreadyExistsException e) {
-            resp.setStatus(SC_CONFLICT);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
+            ResponseWrapper.configureErrorResponse(resp, SC_CONFLICT, e);
         } catch (InternalErrorException e) {
-            resp.setStatus(SC_INTERNAL_SERVER_ERROR);
-            objectMapper.writeValue(writer, new ErrorBody(e.getMessage()));
-        } finally {
-            writer.close();
+            ResponseWrapper.configureErrorResponse(resp, SC_INTERNAL_SERVER_ERROR, e);
         }
     }
 }
